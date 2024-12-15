@@ -29,3 +29,13 @@ export interface User {
     email: string;
     role: 'USER' | 'ADMIN';
 }
+
+export interface PaginatedResponse<T> {
+    content: T[];
+    totalPages: number;
+    totalElements: number;
+    size: number;
+    number: number;
+    hasNext: boolean;
+    hasPrevious: boolean;
+}
