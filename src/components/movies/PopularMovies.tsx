@@ -1,4 +1,3 @@
-// src/components/movies/PopularMovies.tsx
 import { usePopularMovies } from '@/hooks/useMovies';
 import MovieCard from './MovieCard';
 
