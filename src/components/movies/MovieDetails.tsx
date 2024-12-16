@@ -4,6 +4,7 @@ import { useMovieDetails } from '@/hooks/useMovies';
 import ReviewList from './ReviewList';
 import ReviewForm from './ReviewForm';
 import Image from 'next/image';
+import MovieActions from "@/components/movies/MovieActions";
 
 interface MovieDetailsProps {
     movieId: number;
@@ -42,7 +43,7 @@ export default function MovieDetails({ movieId }: MovieDetailsProps) {
                             <p>{movie.genres.map(g => g.name).join(', ')}</p>
                         </div>
                     </div>
-
+                    <MovieActions movieId={movieId} />
                     {movie.trailerUrl && (
                         <div>
                             <h3 className="font-semibold mb-2">Trailer</h3>
