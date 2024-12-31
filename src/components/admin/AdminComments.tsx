@@ -1,8 +1,9 @@
 'use client';
-import { useState } from 'react';
+// import { useState } from 'react';
 import { Review, Comment } from '@/types';
 import { api } from '@/lib/api';
-import { useSWR, mutate } from 'swr';
+import useSWR from "swr";
+import { mutate } from 'swr';
 
 export default function AdminComments() {
     const { data: reviews } = useSWR<Review[]>('/api/reviews');

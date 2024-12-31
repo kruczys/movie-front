@@ -2,16 +2,17 @@
 import { useState } from 'react';
 import { User } from '@/types';
 import { api } from '@/lib/api';
-import { useSWR, mutate } from 'swr';
+import useSWR from "swr";
+import { mutate } from 'swr';
 
 export default function AdminUsers() {
     const { data: users, error } = useSWR<User[]>('/api/users');
-    const [selectedUser, setSelectedUser] = useState<User | null>(null);
+    // const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
     const handleRoleChange = async (userId: number, newRole: 'USER' | 'ADMIN') => {
         try {
             await api.patch(`/api/users/${userId}`, { role: newRole });
-            mutate('/api/users'); // Odśwież listę użytkowników
+            mutate('/api/users');
         } catch (error) {
             console.error('Error updating user role:', error);
         }

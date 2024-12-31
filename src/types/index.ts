@@ -39,3 +39,12 @@ export interface PaginatedResponse<T> {
     hasNext: boolean;
     hasPrevious: boolean;
 }
+
+export interface Comment {
+    id: number;
+    content: string;
+    createdAt: string;
+    userId: number;
+    reviewId: number;
+    user?: User;
+}
