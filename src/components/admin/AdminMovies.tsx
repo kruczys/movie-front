@@ -1,75 +1,80 @@
+'use client';
 import { useState } from 'react';
 import { Movie } from '@/types';
-import { useMovies } from '@/hooks/useMovies';
+import useSWR from 'swr';
 import { api } from '@/lib/api';
-import { useSWRConfig } from 'swr';
 
 export default function AdminMovies() {
-    const [isEditing, setIsEditing] = useState<number | null>(null);
-    const [formData, setFormData] = useState<Partial<Movie>>({});
-    const { mutate } = useSWRConfig();
+    const { data: movies, error, mutate } = useSWR<Movie[]>('/api/movies');
+    const [editingId, setEditingId] = useState<number | null>(null);
+    const [editForm, setEditForm] = useState<Partial<Movie>>({});
 
-    // Get all movies with pagination
-    const { data: movies, isLoading } = useMovies();
+    const handleEdit = (movie: Movie) => {
+        setEditingId(movie.id);
+        setEditForm(movie);
+    };
 
-    const handleEdit = async (movieId: number) => {
-        if (isEditing === movieId) {
-            try {
-                await api.put(`/movies/${movieId}`, formData);
-                mutate('/movies'); // Refresh movie list
-                setIsEditing(null);
-                setFormData({});
-            } catch (error) {
-                console.error('Error updating movie:', error);
-            }
-        } else {
-            setIsEditing(movieId);
-            const movie = movies?.find(m => m.id === movieId);
-            if (movie) setFormData(movie);
+    const handleSave = async () => {
+        if (!editingId) return;
+
+        try {
+            await api.put(`/api/movies/${editingId}`, editForm);
+            await mutate(); // Odśwież listę
+            setEditingId(null);
+            setEditForm({});
+        } catch (error) {
+            console.error('Error updating movie:', error);
+            alert('Error updating movie');
         }
     };
 
-    const handleDelete = async (movieId: number) => {
-        if (window.confirm('Are you sure you want to delete this movie?')) {
-            try {
-                await api.delete(`/movies/${movieId}`);
-                mutate('/movies'); // Refresh movie list
-            } catch (error) {
-                console.error('Error deleting movie:', error);
-            }
+    const handleDelete = async (id: number) => {
+        if (!window.confirm('Are you sure you want to delete this movie?')) return;
+
+        try {
+            await api.delete(`/api/movies/${id}`);
+            await mutate(); // Odśwież listę
+        } catch (error) {
+            console.error('Error deleting movie:', error);
+            alert('Error deleting movie');
         }
     };
+
+    if (error) return <div>Error loading movies</div>;
+    if (!movies) return <div>Loading...</div>;
 
     return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <h2 className="text-xl font-semibold">Manage Movies</h2>
-                <button className="bg-blue-500 text-white px-4 py-2 rounded-lg">
-                    Add New Movie
-                </button>
-            </div>
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+            <div className="p-6">
+                <div className="flex justify-between mb-4">
+                    <h2 className="text-xl font-bold">Manage Movies</h2>
+                    <button
+                        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                        onClick={() => {/* TODO: Add new movie modal */}}
+                    >
+                        Add New Movie
+                    </button>
+                </div>
 
-            {isLoading ? (
-                <div>Loading...</div>
-            ) : (
                 <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                         <tr>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Release Date</th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Title</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Release Date</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Genres</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                         </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                        {movies?.map((movie) => (
+                        {movies.map((movie) => (
                             <tr key={movie.id}>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                    {isEditing === movie.id ? (
+                                    {editingId === movie.id ? (
                                         <input
                                             type="text"
-                                            value={formData.title || ''}
-                                            onChange={(e) => setFormData({...formData, title: e.target.value})}
+                                            value={editForm.title || ''}
+                                            onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
                                             className="border rounded px-2 py-1"
                                         />
                                     ) : (
@@ -77,11 +82,11 @@ export default function AdminMovies() {
                                     )}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                    {isEditing === movie.id ? (
+                                    {editingId === movie.id ? (
                                         <input
                                             type="date"
-                                            value={formData.releaseDate || ''}
-                                            onChange={(e) => setFormData({...formData, releaseDate: e.target.value})}
+                                            value={editForm.releaseDate || ''}
+                                            onChange={(e) => setEditForm({ ...editForm, releaseDate: e.target.value })}
                                             className="border rounded px-2 py-1"
                                         />
                                     ) : (
@@ -89,12 +94,24 @@ export default function AdminMovies() {
                                     )}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                    <button
-                                        onClick={() => handleEdit(movie.id)}
-                                        className="text-indigo-600 hover:text-indigo-900 mr-4"
-                                    >
-                                        {isEditing === movie.id ? 'Save' : 'Edit'}
-                                    </button>
+                                    {movie.genres?.map(g => g.name).join(', ')}
+                                </td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {editingId === movie.id ? (
+                                        <button
+                                            onClick={handleSave}
+                                            className="text-green-600 hover:text-green-900 mr-4"
+                                        >
+                                            Save
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={() => handleEdit(movie)}
+                                            className="text-blue-600 hover:text-blue-900 mr-4"
+                                        >
+                                            Edit
+                                        </button>
+                                    )}
                                     <button
                                         onClick={() => handleDelete(movie.id)}
                                         className="text-red-600 hover:text-red-900"
@@ -107,7 +124,7 @@ export default function AdminMovies() {
                         </tbody>
                     </table>
                 </div>
-            )}
+            </div>
         </div>
     );
 }

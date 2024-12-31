@@ -28,6 +28,10 @@ export interface User {
     username: string;
     email: string;
     role: 'USER' | 'ADMIN';
+    reviews: Review[];
+    favoriteMovies: Movie[];
+    watchList: Movie[];
+    ignoredMovies: Movie[];
 }
 
 export interface PaginatedResponse<T> {
